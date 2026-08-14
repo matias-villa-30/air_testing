@@ -1,0 +1,5 @@
+CompileFlags:
+  Remove: [-fno-reorder-functions, -mfp16-format=ieee, -fno-printf-return-value]
+
+Diagnostics:
+  Suppress: [drv_unknown_argument]

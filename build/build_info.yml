@@ -1,0 +1,64 @@
+cmake:
+  application:
+    configuration-dir: '/home/arch_matias/metropolia/CarbonSniffer'
+    source-dir: '/home/arch_matias/metropolia/CarbonSniffer'
+  board:
+    name: 'xiao_ble'
+    path:
+     - '/home/arch_matias/zephyrproject/zephyr/boards/seeed/xiao_ble'
+    qualifiers: 'nrf52840/sense'
+    revision: ''
+  devicetree:
+    bindings-dirs:
+     - '/home/arch_matias/zephyrproject/zephyr/dts/bindings'
+    files:
+     - '/home/arch_matias/zephyrproject/zephyr/boards/seeed/xiao_ble/xiao_ble_nrf52840_sense.dts'
+     - '/home/arch_matias/metropolia/CarbonSniffer/boards/xiao_ble_nrf52840_sense.overlay'
+    include-dirs:
+     - '/home/arch_matias/zephyrproject/modules/hal/ambiq/dts'
+     - '/home/arch_matias/zephyrproject/modules/hal/atmel/include'
+     - '/home/arch_matias/zephyrproject/modules/hal/bouffalolab/include'
+     - '/home/arch_matias/zephyrproject/modules/hal/bouffalolab/include/zephyr'
+     - '/home/arch_matias/zephyrproject/modules/hal/gigadevice/include'
+     - '/home/arch_matias/zephyrproject/modules/hal/microchip/include'
+     - '/home/arch_matias/zephyrproject/modules/hal/microchip/dts'
+     - '/home/arch_matias/zephyrproject/modules/hal/nuvoton/dts'
+     - '/home/arch_matias/zephyrproject/modules/hal/nxp/dts'
+     - '/home/arch_matias/zephyrproject/modules/hal/stm32/dts'
+     - '/home/arch_matias/zephyrproject/modules/hal/ti/dts'
+     - '/home/arch_matias/zephyrproject/zephyr/include'
+     - '/home/arch_matias/zephyrproject/zephyr/include/zephyr'
+     - '/home/arch_matias/zephyrproject/zephyr/dts/common'
+     - '/home/arch_matias/zephyrproject/zephyr/dts/vendor'
+     - '/home/arch_matias/zephyrproject/zephyr/dts/rx'
+     - '/home/arch_matias/zephyrproject/zephyr/dts/x86'
+     - '/home/arch_matias/zephyrproject/zephyr/dts/xtensa'
+     - '/home/arch_matias/zephyrproject/zephyr/dts/sparc'
+     - '/home/arch_matias/zephyrproject/zephyr/dts/riscv'
+     - '/home/arch_matias/zephyrproject/zephyr/dts/posix'
+     - '/home/arch_matias/zephyrproject/zephyr/dts/arm64'
+     - '/home/arch_matias/zephyrproject/zephyr/dts/arm'
+     - '/home/arch_matias/zephyrproject/zephyr/dts/arc'
+     - '/home/arch_matias/zephyrproject/zephyr/dts'
+    user-files:
+     - '/home/arch_matias/metropolia/CarbonSniffer/boards/xiao_ble_nrf52840_sense.overlay'
+  kconfig:
+    files:
+     - '/home/arch_matias/zephyrproject/zephyr/boards/seeed/xiao_ble/xiao_ble_nrf52840_sense_defconfig'
+     - '/home/arch_matias/metropolia/CarbonSniffer/prj.conf'
+    user-files:
+     - '/home/arch_matias/metropolia/CarbonSniffer/prj.conf'
+  toolchain:
+    name: 'zephyr'
+    path: '/home/arch_matias/zephyr-sdk-1.0.1'
+  vendor-specific:
+    nordic:
+      svdfile: '/home/arch_matias/zephyrproject/modules/hal/nordic/nrfx/bsp/stable/mdk/nrf52840.svd'
+  zephyr:
+    version: '4.4.99'
+    zephyr-base: '/home/arch_matias/zephyrproject/zephyr'
+version: '0.1.0'
+west:
+  command: '/home/arch_matias/zephyrproject/.venv/bin/west build -b xiao_ble/nrf52840/sense --pristine'
+  topdir: '/home/arch_matias/zephyrproject'
+  version: '1.5.0'
