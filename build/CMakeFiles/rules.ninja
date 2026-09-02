@@ -12,21 +12,21 @@
 # =============================================================================
 
 #############################################
-# Rule for compiling C files.
+# Rule for compiling CXX files.
 
-rule C_COMPILER__app_unscanned_
+rule CXX_COMPILER__app_unscanned_
   depfile = $DEP_FILE
   deps = gcc
-  command = ccache ${LAUNCHER}${CODE_CHECK}/home/arch_matias/zephyr-sdk-1.0.1/gnu/arm-zephyr-eabi/bin/arm-zephyr-eabi-gcc $DEFINES $INCLUDES $FLAGS -MD -MT $out -MF $DEP_FILE -o $out -c $in
-  description = Building C object $out
+  command = ccache ${LAUNCHER}${CODE_CHECK}/home/arch_matias/zephyr-sdk-1.0.1/gnu/arm-zephyr-eabi/bin/arm-zephyr-eabi-g++ $DEFINES $INCLUDES $FLAGS -MD -MT $out -MF $DEP_FILE -o $out -c $in
+  description = Building CXX object $out
 
 
 #############################################
-# Rule for linking C static library.
+# Rule for linking CXX static library.
 
-rule C_STATIC_LIBRARY_LINKER__app_
+rule CXX_STATIC_LIBRARY_LINKER__app_
   command = $PRE_LINK && ccache /usr/bin/cmake -E rm -f $TARGET_FILE && ccache /home/arch_matias/zephyr-sdk-1.0.1/gnu/arm-zephyr-eabi/bin/arm-zephyr-eabi-ar qc $TARGET_FILE $LINK_FLAGS $in && ccache /home/arch_matias/zephyr-sdk-1.0.1/gnu/arm-zephyr-eabi/bin/arm-zephyr-eabi-ranlib $TARGET_FILE && $POST_BUILD
-  description = Linking C static library $TARGET_FILE
+  description = Linking CXX static library $TARGET_FILE
   restat = $RESTAT
 
 
@@ -78,11 +78,11 @@ rule C_COMPILER__zephyr_pre0_unscanned_
 
 
 #############################################
-# Rule for linking C executable.
+# Rule for linking CXX executable.
 
-rule C_EXECUTABLE_LINKER__zephyr_pre0_
-  command = $PRE_LINK && ccache /home/arch_matias/zephyr-sdk-1.0.1/gnu/arm-zephyr-eabi/bin/arm-zephyr-eabi-gcc $FLAGS $LINK_FLAGS $in -o $TARGET_FILE $LINK_PATH $LINK_LIBRARIES -L"/home/arch_matias/zephyr-sdk-1.0.1/gnu/arm-zephyr-eabi/bin/../lib/gcc/arm-zephyr-eabi/14.3.0/thumb/v7e-m/nofp/space" -lc -lgcc && $POST_BUILD
-  description = Linking C executable $TARGET_FILE; Logical command for additional byproducts on target: zephyr_pre0
+rule CXX_EXECUTABLE_LINKER__zephyr_pre0_
+  command = $PRE_LINK && ccache /home/arch_matias/zephyr-sdk-1.0.1/gnu/arm-zephyr-eabi/bin/arm-zephyr-eabi-g++ $FLAGS $LINK_FLAGS $in -o $TARGET_FILE $LINK_PATH $LINK_LIBRARIES -L"/home/arch_matias/zephyr-sdk-1.0.1/gnu/arm-zephyr-eabi/bin/../lib/gcc/arm-zephyr-eabi/14.3.0/thumb/v7e-m/nofp/space" -lc -lgcc && $POST_BUILD
+  description = Linking CXX executable $TARGET_FILE; Logical command for additional byproducts on target: zephyr_pre0
   restat = $RESTAT
 
 
@@ -97,11 +97,11 @@ rule C_COMPILER__zephyr_final_unscanned_
 
 
 #############################################
-# Rule for linking C executable.
+# Rule for linking CXX executable.
 
-rule C_EXECUTABLE_LINKER__zephyr_final_
-  command = $PRE_LINK && ccache /home/arch_matias/zephyr-sdk-1.0.1/gnu/arm-zephyr-eabi/bin/arm-zephyr-eabi-gcc $FLAGS $LINK_FLAGS $in -o $TARGET_FILE $LINK_PATH $LINK_LIBRARIES -L"/home/arch_matias/zephyr-sdk-1.0.1/gnu/arm-zephyr-eabi/bin/../lib/gcc/arm-zephyr-eabi/14.3.0/thumb/v7e-m/nofp/space" -lc -lgcc && $POST_BUILD
-  description = Linking C executable $TARGET_FILE
+rule CXX_EXECUTABLE_LINKER__zephyr_final_
+  command = $PRE_LINK && ccache /home/arch_matias/zephyr-sdk-1.0.1/gnu/arm-zephyr-eabi/bin/arm-zephyr-eabi-g++ $FLAGS $LINK_FLAGS $in -o $TARGET_FILE $LINK_PATH $LINK_LIBRARIES -L"/home/arch_matias/zephyr-sdk-1.0.1/gnu/arm-zephyr-eabi/bin/../lib/gcc/arm-zephyr-eabi/14.3.0/thumb/v7e-m/nofp/space" -lc -lgcc && $POST_BUILD
+  description = Linking CXX executable $TARGET_FILE
   restat = $RESTAT
 
 

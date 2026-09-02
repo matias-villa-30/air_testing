@@ -1821,7 +1821,7 @@ events:
       - "CMakeLists.txt:3 (find_package)"
     message: |
       The target system is: Generic - 4.4.99 - arm
-      The host system is: Linux - 7.1.8-arch1-3 - x86_64
+      The host system is: Linux - 7.1.11-arch1-1 - x86_64
   -
     kind: "find-v1"
     backtrace:
@@ -1957,7 +1957,7 @@ events:
       Compilation of the C compiler identification source "CMakeCCompilerId.c" produced "a.out"
       
       The C compiler identification is GNU, found in:
-        /home/arch_matias/metropolia/CarbonSniffer/build/CMakeFiles/4.4.2/CompilerIdC/a.out
+        /home/arch_matias/metropolia/CarbonSniffer/build/CMakeFiles/4.4.3/CompilerIdC/a.out
       
   -
     kind: "find-v1"
@@ -2379,7 +2379,7 @@ events:
       Compilation of the CXX compiler identification source "CMakeCXXCompilerId.cpp" produced "a.out"
       
       The CXX compiler identification is GNU, found in:
-        /home/arch_matias/metropolia/CarbonSniffer/build/CMakeFiles/4.4.2/CompilerIdCXX/a.out
+        /home/arch_matias/metropolia/CarbonSniffer/build/CMakeFiles/4.4.3/CompilerIdCXX/a.out
       
   -
     kind: "find-v1"
