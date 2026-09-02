@@ -49,17 +49,22 @@ namespace SCD41
       HUMIDITY
    } step_readings;
 
-   extern const struct device    *dev;
-   extern struct scd41_readings  enviroment_data;
-   // queues 
-   extern struct k_queue         co2_queue;
-   extern struct k_queue         temp_queue;
-   extern struct k_queue         humid_queue;
-   // item queues 
-   extern struct que_item        sample_pool[QUE_SIZE];
-   extern struct que_item        co2_pool[QUE_SIZE];   
-   extern struct que_item        temp_pool[QUE_SIZE];   
-   extern struct que_item        humid_pool[QUE_SIZE];   
+   struct Context_scd41 {
+      const struct device *dev;
+      scd41_readings enviroment_data;
+      // queues 
+      k_queue co2_queue;
+      k_queue temp_queue;
+      k_queue humid_queue;
+      // item queues 
+      que_item sample_pool[QUE_SIZE];
+      que_item co2_pool[QUE_SIZE];
+      que_item temp_pool[QUE_SIZE];
+      que_item humid_pool[QUE_SIZE];
+   };
+
+   Context_scd41& ctx_scd41(void);
 }   
+
 
 #endif // SCD41_H

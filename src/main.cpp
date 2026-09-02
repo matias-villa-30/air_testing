@@ -14,6 +14,7 @@
 #include <zephyr/drivers/sensor/scd4x.h>
 #include "bme690.hpp"
 #include "task.hpp"
+#include "scd41.hpp"
 #include "zephyr/sys/clock.h"
 
 #define STACKSIZE          1024
@@ -28,12 +29,13 @@ K_THREAD_DEFINE(scd41_id, STACKSIZE, AirObserver::scd41_thread, NULL, NULL, NULL
 
 int main(void) {
 
-   const struct device *const dev = DEVICE_DT_GET(DT_NODELABEL(scd41));
+//   const struct device *const dev = DEVICE_DT_GET(DT_NODELABEL(scd41));
    auto c = BME690::ctx(); 
+   auto scd = SCD41::ctx_scd41();
    printk("|BOOT|\n");
 
    // Make sure the driver initialized successfully on boot
-   if (!device_is_ready(dev) || !device_is_ready(c.bme_dev.bus)) {
+   if (!device_is_ready(scd.dev) || !device_is_ready(c.bme_dev.bus)) {
       printk("Sensors not ready!\n");
       return 0;
    } else printk("Sensors ready!\n");
