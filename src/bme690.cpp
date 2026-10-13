@@ -37,11 +37,11 @@ namespace BME690
       auto &c_util = UTIL::util_ctx();
 
       struct gas_fetched steps[] = {
-         { BME690_REGISTERS::PAR_G1,         &c.gas_calib.par_g1,    sizeof(c.gas_calib.par_g1),    &gas_was_fetched.par_g1    },
-         { BME690_REGISTERS::PAR_G2,         &c.gas_calib.par_g2,    sizeof(c.gas_calib.par_g2),    &gas_was_fetched.par_g2    },
-         { BME690_REGISTERS::PAR_G3,         &c.gas_calib.par_g3,    sizeof(c.gas_calib.par_g3),    &gas_was_fetched.par_g3    },
-         { BME690_REGISTERS::RES_HEAT_RANGE, &c.gas_calib.raw_range, sizeof(c.gas_calib.raw_range), &gas_was_fetched.res_range },
-         { BME690_REGISTERS::RES_HEAT_VALUE, &c.gas_calib.raw_val,   sizeof(c.gas_calib.raw_val),   &gas_was_fetched.res_heat  },
+         { BME690::REGISTERS::PAR_G1,         &c.gas_calib.par_g1,    sizeof(c.gas_calib.par_g1),    &gas_was_fetched.par_g1    },
+         { BME690::REGISTERS::PAR_G2,         &c.gas_calib.par_g2,    sizeof(c.gas_calib.par_g2),    &gas_was_fetched.par_g2    },
+         { BME690::REGISTERS::PAR_G3,         &c.gas_calib.par_g3,    sizeof(c.gas_calib.par_g3),    &gas_was_fetched.par_g3    },
+         { BME690::REGISTERS::RES_HEAT_RANGE, &c.gas_calib.raw_range, sizeof(c.gas_calib.raw_range), &gas_was_fetched.res_range },
+         { BME690::REGISTERS::RES_HEAT_VALUE, &c.gas_calib.raw_val,   sizeof(c.gas_calib.raw_val),   &gas_was_fetched.res_heat  },
       };
 
       struct gas_fetched *s = &steps[step_idx];
@@ -55,7 +55,7 @@ namespace BME690
       } else {
          printk("I2C error on step %u (reg 0x%02x): [%d]\n", step_idx, s->reg, rc);
          retry_count++;
-         if (retry_count >= BME690_REGISTERS::I2C_RETRY) {
+         if (retry_count >= BME690::I2C_RETRY) {
             *s->fetched_flag = false;   // give up on this one, move on so we don't hang forever
             step_idx++;
             retry_count = 0;
@@ -76,14 +76,14 @@ namespace BME690
    void configure_oversampling(void) {
       auto &c = ctx();
       // configure sensor oversampling rate for gas sensor
-      uint8_t ctrl_meas_val[2] = {BME690_REGISTERS::CTRL_MEAS, BME690_REGISTERS::CTRL_MEAS_OSRS};
+      uint8_t ctrl_meas_val[2] = {BME690::REGISTERS::CTRL_MEAS, BME690::REGISTERS::CTRL_MEAS_OSRS};
       i2c_write_dt(&c.bme_dev, ctrl_meas_val, sizeof(ctrl_meas_val));
    }
 
    void soft_reset(void) {
       auto &c = ctx();
       // PERORM A SOFTWARE RESET
-      uint8_t buf[2] = {BME690_REGISTERS::RESET_REG, BME690_REGISTERS::RESET_CMD};
+      uint8_t buf[2] = {BME690::REGISTERS::RESET_REG, BME690::REGISTERS::RESET_CMD};
       i2c_write_dt(&c.bme_dev, buf, sizeof(buf));
    }
 
@@ -95,8 +95,8 @@ namespace BME690
       double var1       = ((double)c.gas_calib.par_g1 / 16.0) + 49.0;
       double var2       = (((double)c.gas_calib.par_g2 / 32768.0) * 0.0005) + 0.00235;
       double var3       = (double)c.gas_calib.par_g3 / 1024.0;
-      double var4       = var1 * (1.0 + (var2 * (double)BME690_REGISTERS::TARGET_TEMP));
-      double var5       = var4 + (var3 * (double)BME690_REGISTERS::AMB_TEMP);
+      double var4       = var1 * (1.0 + (var2 * (double)BME690::REGISTERS::TARGET_TEMP));
+      double var5       = var4 + (var3 * (double)BME690::REGISTERS::AMB_TEMP);
       double res_heat_x = (uint8_t)(3.4 * ((var5 * (4.0 / (4.0 + (double)c.gas_calib.res_range))) *
                            (1.0 / (1.0 + (double)c.gas_calib.res_heat * 0.002))) - 25);
       // sensor is calibrated
@@ -108,10 +108,10 @@ namespace BME690
       auto &c = ctx();
       auto &util_c = UTIL::util_ctx();
 
-      uint8_t gas_wait_0[2] = {BME690_REGISTERS::GAS_WAIT_0, 0x59};
-      uint8_t res_heat_0[2] = {BME690_REGISTERS::RES_HEAT_0, (uint8_t)c.gas_calib.is_calib};
-      uint8_t ctrl_gas_1    = BME690_REGISTERS::CTRL_GAS_1;
-      uint8_t ctrl_meas     = BME690_REGISTERS::CTRL_MEAS;
+      uint8_t gas_wait_0[2] = {BME690::REGISTERS::GAS_WAIT_0, 0x59};
+      uint8_t res_heat_0[2] = {BME690::REGISTERS::RES_HEAT_0, (uint8_t)c.gas_calib.is_calib};
+      uint8_t ctrl_gas_1    =  BME690::REGISTERS::CTRL_GAS_1;
+      uint8_t ctrl_meas     =  BME690::REGISTERS::CTRL_MEAS;
       uint8_t run_gas;
       uint8_t set_mode;
       int rc = 0;
@@ -122,11 +122,11 @@ namespace BME690
          rc = i2c_write_dt(&c.bme_dev, gas_wait_0, sizeof(gas_wait_0));
          if (rc != 0) {
             printk("Error writing gas_wait_0: [%d]\n", rc);
-            if (++meas_retry_count < BME690_REGISTERS::I2C_RETRY) {
+            if (++meas_retry_count < BME690::I2C_RETRY) {
                k_work_schedule(&util_c.meas_steps, K_MSEC(UTIL::I2C_WAIT_MS));
                return;   // retry same step
             }
-            printk("Giving up on gas_wait_0 after %d retries\n", BME690_REGISTERS::I2C_RETRY);
+            printk("Giving up on gas_wait_0 after %d retries\n", BME690::I2C_RETRY);
          }
          meas_retry_count  = 0;
          current_meas_step = RES_HEAT_X;
@@ -137,11 +137,11 @@ namespace BME690
          rc = i2c_write_dt(&c.bme_dev, res_heat_0, sizeof(res_heat_0));
          if (rc != 0) {
             printk("Error writing res_heat_0: [%d]\n", rc);
-            if (++meas_retry_count < BME690_REGISTERS::I2C_RETRY) {
+            if (++meas_retry_count < BME690::I2C_RETRY) {
                k_work_schedule(&util_c.meas_steps, K_MSEC(UTIL::I2C_WAIT_MS));
                return;
             }
-            printk("Giving up on res_heat_0 after %d retries\n", BME690_REGISTERS::I2C_RETRY);
+            printk("Giving up on res_heat_0 after %d retries\n", BME690::I2C_RETRY);
          }
          meas_retry_count  = 0;
          current_meas_step = RUN_GAS;
@@ -152,11 +152,11 @@ namespace BME690
          rc = i2c_write_read_dt(&c.bme_dev, &ctrl_gas_1, 1, &run_gas, 1);
          if (rc != 0) {
             printk("Error reading ctrl_gas_1: [%d]\n", rc);
-            if (++meas_retry_count < BME690_REGISTERS::I2C_RETRY) {
+            if (++meas_retry_count < BME690::I2C_RETRY) {
                k_work_schedule(&util_c.meas_steps, K_MSEC(UTIL::I2C_WAIT_MS));
                return;
             }
-            printk("Giving up on ctrl_gas_1 after %d retries\n", BME690_REGISTERS::I2C_RETRY);
+            printk("Giving up on ctrl_gas_1 after %d retries\n", BME690::I2C_RETRY);
             meas_retry_count  = 0;
             current_meas_step = NB_CONV;   // don't hang forever, but run_gas bit is unset
             k_work_schedule(&util_c.meas_steps, K_MSEC(UTIL::I2C_WAIT_MS));
@@ -165,7 +165,7 @@ namespace BME690
          run_gas &= ~0x0F;     // clear nb_conv index to 0
          run_gas |= (1 << 5);  // set run_gas bit
          {
-            uint8_t buf[2] = {BME690_REGISTERS::CTRL_GAS_1, run_gas};
+            uint8_t buf[2] = {BME690::REGISTERS::CTRL_GAS_1, run_gas};
             i2c_write_dt(&c.bme_dev, buf, sizeof(buf));
          }
          meas_retry_count  = 0;
@@ -177,11 +177,11 @@ namespace BME690
          rc = i2c_write_read_dt(&c.bme_dev, &ctrl_meas, 1, &set_mode, 1);
          if (rc != 0) {
             printk("Error reading ctrl_meas register: [%d]\n", rc);
-            if (++meas_retry_count < BME690_REGISTERS::I2C_RETRY) {
+            if (++meas_retry_count < BME690::I2C_RETRY) {
                k_work_schedule(&util_c.meas_steps, K_MSEC(UTIL::I2C_WAIT_MS));
                return;
             }
-            printk("Giving up on ctrl_meas after %d retries\n", BME690_REGISTERS::I2C_RETRY);
+            printk("Giving up on ctrl_meas after %d retries\n", BME690::I2C_RETRY);
             meas_retry_count = 0;
             k_sem_give(&util_c.sem_meas);   // don't leave bme690_thread blocked forever
             break;
@@ -189,7 +189,7 @@ namespace BME690
          set_mode &= ~0x03;   // Clear bits 1:0
          set_mode |= 0x01;    // Set Forced Mode (0b01)
          {
-            uint8_t buf2[2] = {BME690_REGISTERS::CTRL_MEAS, set_mode};
+            uint8_t buf2[2] = {BME690::REGISTERS::CTRL_MEAS, set_mode};
             i2c_write_dt(&c.bme_dev, buf2, sizeof(buf2));
          }
          meas_retry_count = 0;
@@ -260,7 +260,7 @@ namespace BME690
       // PUSH GAS RESISTANCE FUNCTION TO ITS QUEUE 
       auto &c = ctx(); 
       auto *item = &c.gas_pool[gas_pool_idx];
-      gas_pool_idx = (gas_pool_idx + 1) % BME690_REGISTERS::GAS_TOTAL_QUE;
+      gas_pool_idx = (gas_pool_idx + 1) % BME690::GAS_TOTAL_QUE;
 
        item->value = value;
        k_queue_append(&c.gas_queue, item);
@@ -272,7 +272,7 @@ namespace BME690
       int count = 0;
 
       while (!k_queue_is_empty(gas_que)) {
-         void *data = k_queue_get(gas_que, K_MSEC(250));
+         void *data = k_queue_get(gas_que, K_MSEC(UTIL::QUE_DELAY));
          if (data == NULL) {
             break;
          }

@@ -39,7 +39,7 @@ namespace AirObserver {
             BME690::parse_gas_readings();
             BME690::gas_sample_push(c.gas_calib.gas_ohms);
             avg_index++;
-            if (avg_index == BME690_REGISTERS::GAS_TOTAL_QUE){
+            if (avg_index == BME690::GAS_TOTAL_QUE){
                // PRINT THE RESISTANCE MEASURED TO CONSOLE AND RESET THE INDEX
                float avg = BME690::avg_gas_measured(&c.gas_queue);
                printk("Gas resistance level is: [%.3f] ohms\n", (double)avg);

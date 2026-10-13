@@ -14,6 +14,7 @@
 namespace UTIL {
    
    constexpr uint8_t I2C_WAIT_MS =  5;
+   constexpr uint8_t QUE_DELAY = 250;
    // MUTEX
    extern struct k_mutex            air_mutex;
 
