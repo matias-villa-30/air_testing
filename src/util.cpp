@@ -1,5 +1,4 @@
-
-/*    AirObserver
+/*    
  *    util.cpp
  *    Matias Villa
  */

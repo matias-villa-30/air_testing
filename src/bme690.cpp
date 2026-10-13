@@ -1,5 +1,4 @@
 /*
- * AirObserver
  * bme690.cpp
  * Created by Matias Villa
  *

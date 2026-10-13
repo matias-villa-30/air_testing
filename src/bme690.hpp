@@ -1,5 +1,4 @@
 /*
- *  AirObserver 
  *  bme690.hpp
  *  Created by Matias Villa
  *
