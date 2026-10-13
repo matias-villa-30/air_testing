@@ -54,13 +54,14 @@ namespace BME690
    // VALIDATE THAT EACH REGISTER FROM GAS_INFO GOT THE CORRECT VALUE FROM I2C TRANSACTION
 
    struct gas_fetched {
-      uint8_t  reg;
-      void     *dest;
-      size_t   len;
-      bool     *fetched_flag;
+      uint8_t  reg;              // VALUE FROM REGISTER 
+      void     *dest;            // POINTER TO VARIABLA THAT WILL HOLD THE VALUE COMING FROM THE REGISTER 
+      size_t   len;              // SIZE OF DATA 
+      bool     *fetched_flag;    // TRUE FOR SUCCESFUL I2C TRANSACTION
    };
 
    struct fetch_flag {
+      // FLAGAS FOR SUCCESFUL I2C TRANSACTIONS WHEN FETCHING FROM REGISTERS BEFORE PERFORMING CALIBRATION
       bool par_g1;
       bool par_g2;
       bool par_g3;
@@ -88,10 +89,10 @@ namespace BME690
    } measurement_steps;
    
    struct Context {
-      i2c_dt_spec    bme_dev;
-      gas_info       gas_calib;
-      gas_parsed     curated_gas;
-      k_queue        gas_queue;
+      i2c_dt_spec    bme_dev;       // I2C 
+      gas_info       gas_calib;     // CALIBRATION VALUES 
+      gas_parsed     curated_gas;   // VALUES AFTER CALCULATIONS 
+      k_queue        gas_queue;     // QUUEUE FOR GAS RESISTANCE READINGS 
       gas_que_item   gas_pool[BME690_REGISTERS::GAS_TOTAL_QUE];
    };
  
@@ -107,7 +108,6 @@ namespace BME690
    void fetch_work_handler(struct k_work *work);
    void measurement_work_handler(struct k_work *measurements);
    bool new_gas_readout(void);            // CHECK IF THERE IS A NEW VALID READ
-   bool is_fetched(struct gas_fetched *regs_fetched);
    void gas_sample_push(float gas_item);
    float avg_gas_measured(struct k_queue *gas_queue);
 

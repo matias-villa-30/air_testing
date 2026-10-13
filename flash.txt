@@ -1,0 +1,5 @@
+west build -b xiao_ble/nrf52840/sense --pristine
+lsblk
+sudo mount /dev/sdc /mnt/xiao_ble/
+sudo cp build/zephyr/zephyr.uf2 /mnt/xiao_ble/
+sync

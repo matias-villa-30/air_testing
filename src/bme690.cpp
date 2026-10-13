@@ -17,16 +17,14 @@
 namespace BME690
 {
 
-   measurement_steps          current_meas_step;
-   struct fetch_flag          gas_was_fetched;
+   measurement_steps          current_meas_step;      // mini statemachine for heating sensor 
+   struct fetch_flag          gas_was_fetched;        // bool flags to verify succesful i2c transactions
 
-   static uint8_t             gas_pool_idx;
-   
-   static size_t              step_idx         = 0;
-   static int                 retry_count      = 0;
-   static int                 meas_retry_count = 0;
+   static uint8_t             gas_pool_idx;           // index for elements in gas queue 
+   static size_t              step_idx         = 0;   // index for elements in the registers array
+   static int                 retry_count      = 0;   // index for i2c retries when transaction fails on fetch work handler 
+   static int                 meas_retry_count = 0;   // index for i2c retries when transaction fails on measurement work handler
 
-   
    struct Context bme_ctx{
       .bme_dev = I2C_DT_SPEC_GET(I2C0_NODE),
    };
@@ -34,9 +32,10 @@ namespace BME690
    Context& ctx() {return bme_ctx;}
 
    void fetch_work_handler(struct k_work *work) {
-      
+      // FETCH REGISTERS VALUES NECESSARY TO PERFORM SENSOR HEATING AND CALIBRATION
       auto &c = ctx();
-      
+      auto &c_util = UTIL::util_ctx();
+
       struct gas_fetched steps[] = {
          { BME690_REGISTERS::PAR_G1,         &c.gas_calib.par_g1,    sizeof(c.gas_calib.par_g1),    &gas_was_fetched.par_g1    },
          { BME690_REGISTERS::PAR_G2,         &c.gas_calib.par_g2,    sizeof(c.gas_calib.par_g2),    &gas_was_fetched.par_g2    },
@@ -44,7 +43,6 @@ namespace BME690
          { BME690_REGISTERS::RES_HEAT_RANGE, &c.gas_calib.raw_range, sizeof(c.gas_calib.raw_range), &gas_was_fetched.res_range },
          { BME690_REGISTERS::RES_HEAT_VALUE, &c.gas_calib.raw_val,   sizeof(c.gas_calib.raw_val),   &gas_was_fetched.res_heat  },
       };
-
 
       struct gas_fetched *s = &steps[step_idx];
 
@@ -66,23 +64,25 @@ namespace BME690
       }
 
       if (step_idx < ARRAY_SIZE(steps)) {
-         k_work_schedule(&UTIL::gas_work, K_MSEC(UTIL::I2C_WAIT_MS));
+         k_work_schedule(&c_util.gas_work, K_MSEC(UTIL::I2C_WAIT_MS));
       } else {
          c.gas_calib.res_range = (c.gas_calib.raw_range >> 4) & 0x03;   // bits <5:4>
          c.gas_calib.res_heat  = c.gas_calib.raw_val;
          step_idx = 0;   // reset for next fetch cycle
-         k_sem_give(&UTIL::sem_gas);
+         k_sem_give(&c_util.sem_gas);
       }
    }
 
    void configure_oversampling(void) {
       auto &c = ctx();
+      // configure sensor oversampling rate for gas sensor
       uint8_t ctrl_meas_val[2] = {BME690_REGISTERS::CTRL_MEAS, BME690_REGISTERS::CTRL_MEAS_OSRS};
       i2c_write_dt(&c.bme_dev, ctrl_meas_val, sizeof(ctrl_meas_val));
    }
 
    void soft_reset(void) {
       auto &c = ctx();
+      // PERORM A SOFTWARE RESET
       uint8_t buf[2] = {BME690_REGISTERS::RESET_REG, BME690_REGISTERS::RESET_CMD};
       i2c_write_dt(&c.bme_dev, buf, sizeof(buf));
    }
@@ -104,7 +104,10 @@ namespace BME690
    }
 
    void measurement_work_handler(struct k_work *measurements) {
+      // HEAT GAS SENSOR
       auto &c = ctx();
+      auto &util_c = UTIL::util_ctx();
+
       uint8_t gas_wait_0[2] = {BME690_REGISTERS::GAS_WAIT_0, 0x59};
       uint8_t res_heat_0[2] = {BME690_REGISTERS::RES_HEAT_0, (uint8_t)c.gas_calib.is_calib};
       uint8_t ctrl_gas_1    = BME690_REGISTERS::CTRL_GAS_1;
@@ -120,14 +123,14 @@ namespace BME690
          if (rc != 0) {
             printk("Error writing gas_wait_0: [%d]\n", rc);
             if (++meas_retry_count < BME690_REGISTERS::I2C_RETRY) {
-               k_work_schedule(&UTIL::meas_steps, K_MSEC(UTIL::I2C_WAIT_MS));
+               k_work_schedule(&util_c.meas_steps, K_MSEC(UTIL::I2C_WAIT_MS));
                return;   // retry same step
             }
             printk("Giving up on gas_wait_0 after %d retries\n", BME690_REGISTERS::I2C_RETRY);
          }
          meas_retry_count  = 0;
          current_meas_step = RES_HEAT_X;
-         k_work_schedule(&UTIL::meas_steps, K_MSEC(UTIL::I2C_WAIT_MS));
+         k_work_schedule(&util_c.meas_steps, K_MSEC(UTIL::I2C_WAIT_MS));
          break;
 
       case RES_HEAT_X:
@@ -135,14 +138,14 @@ namespace BME690
          if (rc != 0) {
             printk("Error writing res_heat_0: [%d]\n", rc);
             if (++meas_retry_count < BME690_REGISTERS::I2C_RETRY) {
-               k_work_schedule(&UTIL::meas_steps, K_MSEC(UTIL::I2C_WAIT_MS));
+               k_work_schedule(&util_c.meas_steps, K_MSEC(UTIL::I2C_WAIT_MS));
                return;
             }
             printk("Giving up on res_heat_0 after %d retries\n", BME690_REGISTERS::I2C_RETRY);
          }
          meas_retry_count  = 0;
          current_meas_step = RUN_GAS;
-         k_work_schedule(&UTIL::meas_steps, K_MSEC(UTIL::I2C_WAIT_MS));
+         k_work_schedule(&util_c.meas_steps, K_MSEC(UTIL::I2C_WAIT_MS));
          break;
 
       case RUN_GAS:
@@ -150,13 +153,13 @@ namespace BME690
          if (rc != 0) {
             printk("Error reading ctrl_gas_1: [%d]\n", rc);
             if (++meas_retry_count < BME690_REGISTERS::I2C_RETRY) {
-               k_work_schedule(&UTIL::meas_steps, K_MSEC(UTIL::I2C_WAIT_MS));
+               k_work_schedule(&util_c.meas_steps, K_MSEC(UTIL::I2C_WAIT_MS));
                return;
             }
             printk("Giving up on ctrl_gas_1 after %d retries\n", BME690_REGISTERS::I2C_RETRY);
             meas_retry_count  = 0;
             current_meas_step = NB_CONV;   // don't hang forever, but run_gas bit is unset
-            k_work_schedule(&UTIL::meas_steps, K_MSEC(UTIL::I2C_WAIT_MS));
+            k_work_schedule(&util_c.meas_steps, K_MSEC(UTIL::I2C_WAIT_MS));
             break;
          }
          run_gas &= ~0x0F;     // clear nb_conv index to 0
@@ -167,7 +170,7 @@ namespace BME690
          }
          meas_retry_count  = 0;
          current_meas_step = NB_CONV;
-         k_work_schedule(&UTIL::meas_steps, K_MSEC(UTIL::I2C_WAIT_MS));
+         k_work_schedule(&util_c.meas_steps, K_MSEC(UTIL::I2C_WAIT_MS));
          break;
 
       case NB_CONV:
@@ -175,12 +178,12 @@ namespace BME690
          if (rc != 0) {
             printk("Error reading ctrl_meas register: [%d]\n", rc);
             if (++meas_retry_count < BME690_REGISTERS::I2C_RETRY) {
-               k_work_schedule(&UTIL::meas_steps, K_MSEC(UTIL::I2C_WAIT_MS));
+               k_work_schedule(&util_c.meas_steps, K_MSEC(UTIL::I2C_WAIT_MS));
                return;
             }
             printk("Giving up on ctrl_meas after %d retries\n", BME690_REGISTERS::I2C_RETRY);
             meas_retry_count = 0;
-            k_sem_give(&UTIL::sem_meas);   // don't leave bme690_thread blocked forever
+            k_sem_give(&util_c.sem_meas);   // don't leave bme690_thread blocked forever
             break;
          }
          set_mode &= ~0x03;   // Clear bits 1:0
@@ -190,7 +193,7 @@ namespace BME690
             i2c_write_dt(&c.bme_dev, buf2, sizeof(buf2));
          }
          meas_retry_count = 0;
-         k_sem_give(&UTIL::sem_meas);
+         k_sem_give(&util_c.sem_meas);
          break;
       }
    }
@@ -240,9 +243,6 @@ namespace BME690
       gas_adc   = ((uint16_t)gas_r_msb << 2) | (gas_r_lsb >> 6);   // "Lives" on bit <7:6>
       gas_range = gas_r_lsb & 0x0F;                                // "Lives" on bits <3:0>
 
-      // DEBUG/CURIOSITY PRINT
-      //printk("gas_adc: [%d], gas_range: [%d]\n", gas_adc, gas_range);
-
       c.curated_gas.adc_gas   = gas_adc;
       c.curated_gas.range_gas = gas_range;
 
@@ -257,6 +257,7 @@ namespace BME690
    }
    
    void gas_sample_push(float value) {
+      // PUSH GAS RESISTANCE FUNCTION TO ITS QUEUE 
       auto &c = ctx(); 
       auto *item = &c.gas_pool[gas_pool_idx];
       gas_pool_idx = (gas_pool_idx + 1) % BME690_REGISTERS::GAS_TOTAL_QUE;
@@ -266,7 +267,7 @@ namespace BME690
    }
 
    float avg_gas_measured(struct k_queue *gas_que) {
-      
+      // RETURNS THE AVERAGE OF 8 SAMPLES 
       float sum = 0.0f;
       int count = 0;
 
@@ -285,20 +286,19 @@ namespace BME690
    
    void run_bme690_readings(void) {
       // EXPERIMENTAL GAS SENSOR SEQUENCE (FIELD 0)
-      //printk("Fetching values to perform calibration...\n");
       current_meas_step = GAS_WAIT_X;
 
-      k_work_schedule(&UTIL::gas_work, K_NO_WAIT);
-      k_work_schedule(&UTIL::meas_steps, K_NO_WAIT);
+      auto &ctx_util = UTIL::util_ctx();
+      
+      // SCHEDULE WORKS
+      k_work_schedule(&ctx_util.gas_work, K_NO_WAIT);
+      k_work_schedule(&ctx_util.meas_steps, K_NO_WAIT);
+      
+      k_sem_take(&ctx_util.sem_gas, K_FOREVER);
+      k_sem_take(&ctx_util.sem_meas, K_FOREVER);
 
-      k_sem_take(&UTIL::sem_gas, K_FOREVER);
-      k_sem_take(&UTIL::sem_meas, K_FOREVER);
-
-      //printk("Calculating res_heat_x\n");
       calc_res_heat();
-      //printk("res_heat_x: [%d]\n", gas_calib.is_calib);
 
-      //printk("Enabling gas measurment...\n");
       configure_oversampling();
    }
      

@@ -17,15 +17,8 @@
 
 namespace SCD41
 {
-   
    constexpr uint8_t RETRY_I2C   = 3;
    constexpr uint8_t QUE_SIZE    = 8;
-
-   bool  force_scd41_recalib(void);
-   void  fetch_scd41_readings(struct k_work *read_scd41);
-   void  run_scd41_readings(void);
-   void  queue_sample_push(int item_queue, struct que_item *pool, uint8_t *idx, struct k_queue *que);
-   float avg_measured(struct k_queue *que);
 
    struct scd41_readings {
       struct sensor_value co2;
@@ -64,6 +57,13 @@ namespace SCD41
    };
 
    Context_scd41& ctx_scd41(void);
+   bool  force_scd41_recalib(void);
+   void  fetch_scd41_readings(struct k_work *read_scd41);
+   void  run_scd41_readings(void);
+   void  queue_sample_push(int item_queue, struct que_item *pool, uint8_t *idx, struct k_queue *que);
+   float avg_measured(struct k_queue *que);
+
+
 }   
 
 

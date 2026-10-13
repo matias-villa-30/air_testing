@@ -33,14 +33,16 @@ namespace SCD41
    Context_scd41& ctx_scd41(void) {return scd_ctx;}
    
    void queue_sample_push(int item_queue, struct que_item *pool, uint8_t *idx, struct k_queue *que){
+      // PUSH SAMPLE MEASURED TO QUEUE 
       struct que_item *item = &pool[*idx];
-      *idx = (*idx + 1) % QUE_SIZE;
+      *idx = (*idx + 1) % QUE_SIZE; // MAKE SURE THAT ONLY 8 SAMPLES ARE PUSHED TO THE QUEUE 
 
       item->value = item_queue;
       k_queue_append(que, item);
    }
    
    float avg_measured(struct k_queue *que) {
+      // RETURNS THE AVERAGE OF 8 SAMPLES
       float sum = 0.0f;
       int count = 0;
 
@@ -80,32 +82,34 @@ namespace SCD41
    }
 
    void fetch_scd41_readings(struct k_work *read_scd41){
+      // GET THE SAMPLES FROM THE SENSOR
       auto &c = ctx_scd41();
-
+      auto &util_c = UTIL::util_ctx();
       switch (scd41_steps){
          case CO2:
             sensor_channel_get(c.dev, SENSOR_CHAN_CO2, &c.enviroment_data.co2);
             scd41_steps = TEMP;
-            k_work_schedule(&UTIL::meas_scd41, K_MSEC(UTIL::I2C_WAIT_MS));
+            k_work_schedule(&util_c.meas_scd41, K_MSEC(UTIL::I2C_WAIT_MS));
             break;
 
          case TEMP:
             sensor_channel_get(c.dev, SENSOR_CHAN_AMBIENT_TEMP, &c.enviroment_data.temp);
             scd41_steps = HUMIDITY;
-            k_work_schedule(&UTIL::meas_scd41, K_MSEC(UTIL::I2C_WAIT_MS));
+            k_work_schedule(&util_c.meas_scd41, K_MSEC(UTIL::I2C_WAIT_MS));
             break;
 
          case HUMIDITY:
             sensor_channel_get(c.dev, SENSOR_CHAN_HUMIDITY, &c.enviroment_data.humidity);
-            k_sem_give(&UTIL::sem_scd41);
+            k_sem_give(&util_c.sem_scd41);
             break;
       }
    }
 
    void run_scd41_readings(void){
+      auto &util_c = UTIL::util_ctx();
       scd41_steps = CO2;
-      k_work_schedule(&UTIL::meas_scd41, K_NO_WAIT);
-      k_sem_take(&UTIL::sem_scd41, K_FOREVER);
+      k_work_schedule(&util_c.meas_scd41, K_NO_WAIT);
+      k_sem_take(&util_c.sem_scd41, K_FOREVER);
 
    }
    
